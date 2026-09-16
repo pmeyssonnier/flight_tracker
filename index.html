@@ -386,6 +386,9 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+  <!-- Config locale optionnelle (générée depuis .env par scripts/make_config.sh, ignorée par git) -->
+  <script src="config.local.js" onerror="this.remove()"></script>
+
   <script>
     // Variables globales
     let trackingInterval = null;
@@ -469,10 +472,26 @@
 
     // Sauvegarde & Restauration
     function loadSavedState() {
+      // 1. Valeurs par défaut issues de config.local.js (généré depuis .env)
+      const cfg = window.FLIGHT_TRACKER_CONFIG || {};
+      const fromEnv = {};
+      ['clientId', 'clientSecret', 'token', 'proxyUrl', 'reg', 'icao24'].forEach(k => {
+        if (cfg[k]) fromEnv[k] = String(cfg[k]).trim();
+      });
+      if (fromEnv.token) fromEnv.tokenExpiry = (Date.now() / 1000) + 7200;
+      appState = { ...appState, ...fromEnv };
+
+      // 2. Le localStorage (saisie utilisateur) prime sur le .env
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
+      if (saved || Object.keys(fromEnv).length) {
         try {
-          appState = { ...appState, ...JSON.parse(saved) };
+          if (saved) {
+            // Seules les valeurs non vides du storage écrasent celles du .env
+            const parsed = JSON.parse(saved);
+            Object.keys(parsed).forEach(k => {
+              if (parsed[k] !== '' && parsed[k] !== null && parsed[k] !== undefined) appState[k] = parsed[k];
+            });
+          }
           document.getElementById('regInput').value = appState.reg || '';
           document.getElementById('icaoInput').value = appState.icao24 || '';
           document.getElementById('cfgClientId').value = appState.clientId || '';

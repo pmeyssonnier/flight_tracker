@@ -1,0 +1,9 @@
+# Secrets locaux — ne jamais commiter
+.env
+.env.*
+!.env.example
+config.local.js
+
+# Divers
+node_modules/
+.DS_Store

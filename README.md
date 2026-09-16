@@ -17,6 +17,22 @@ et visualiser son historique de vols via l'API OpenSky Network.
 - Un compte gratuit sur [opensky-network.org](https://opensky-network.org) → onglet **API Client**
   pour générer un `client_id` / `client_secret` (nécessaire pour l'historique des vols)
 
+## Configuration des secrets (`.env`)
+
+Les identifiants peuvent être saisis dans le panneau **⚙️** de la page (stockés en `localStorage`),
+ou fournis via un fichier `.env` **jamais commité** :
+
+```bash
+cp .env.example .env        # puis remplir OPENSKY_CLIENT_ID, OPENSKY_CLIENT_SECRET, OPENSKY_TOKEN…
+./scripts/make_config.sh    # génère config.local.js, lu automatiquement par index.html
+```
+
+- `.env` et `config.local.js` sont ignorés par git (voir `.gitignore`).
+- Une page HTML statique ne peut pas lire un `.env` directement : `config.local.js` sert de pont.
+- Les valeurs saisies dans le panneau ⚙️ priment sur celles du `.env`.
+- ⚠️ Ne déploie pas `config.local.js` sur un site public : le Client Secret serait lisible par tous.
+  Sur un hébergement public, préfère la saisie dans ⚙️ ou un token seul (durée de vie limitée).
+
 ## Utilisation
 
 1. Ouvrir `index.html` dans un navigateur (ou via l'URL déployée)
