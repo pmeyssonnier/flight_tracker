@@ -428,6 +428,7 @@
     let liveHistory = [];          // [{t, icao24, callsign, lat, lon, alt_m, speed_ms, heading, on_ground}]
     const HISTORY_KEY = 'flight_tracker_history_v3';
     const HISTORY_MAX = 5000;      // nombre max de points conservés en localStorage
+    const MANUAL_TOKEN_TTL = 30 * 60 - 60;  // token OpenSky collé à la main : 30 min, marge de 60 s
 
     // Groupes pour la gestion des calques Leaflet
     let historyLayerGroup = L.layerGroup();
@@ -522,7 +523,7 @@
       ['clientId', 'clientSecret', 'token', 'proxyUrl', 'reg', 'icao24'].forEach(k => {
         if (cfg[k]) fromEnv[k] = String(cfg[k]).trim();
       });
-      if (fromEnv.token) fromEnv.tokenExpiry = (Date.now() / 1000) + 7200;
+      if (fromEnv.token) fromEnv.tokenExpiry = (Date.now() / 1000) + MANUAL_TOKEN_TTL;
       appState = { ...appState, ...fromEnv };
 
       // 2. Le localStorage (saisie utilisateur) prime sur le .env
@@ -1023,7 +1024,7 @@
       appState.clientSecret = document.getElementById('cfgClientSecret').value.trim();
       appState.token = document.getElementById('cfgToken').value.trim();
       appState.proxyUrl = document.getElementById('cfgProxyUrl').value.trim();
-      appState.tokenExpiry = appState.token ? (Date.now() / 1000) + 7200 : 0;
+      appState.tokenExpiry = appState.token ? (Date.now() / 1000) + MANUAL_TOKEN_TTL : 0;
       saveState();
       showDiagnostic('✅ Paramètres enregistrés avec succès.', false);
       document.getElementById('settingsPanel').classList.remove('open');
