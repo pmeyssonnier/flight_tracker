@@ -112,6 +112,11 @@
       border-color: var(--danger);
     }
 
+    button.btn-preset {
+      border-color: #f97316;
+      color: #fdba74;
+    }
+
     /* Panneau Paramètres OAuth2 */
     #settingsPanel {
       display: none;
@@ -291,6 +296,7 @@
       <div class="input-group">
         <input type="text" id="regInput" placeholder="Immat (ex: OO-ABC, F-GXYZ)" style="text-transform: uppercase;">
         <button id="btnSearchReg" title="Résoudre ICAO via ADSBdb">🔍 ADSBdb</button>
+        <button id="btnPresetPHDTF" class="btn-preset" data-reg="PH-DTF" title="Falcon 900EX de Max Verstappen">🏎 PH-DTF</button>
       </div>
       <button id="btnToggleSettings" title="Configurer l'API OAuth2 OpenSky">⚙️</button>
     </div>
@@ -952,6 +958,14 @@
 
     // Écouteurs d'événements
     document.getElementById('btnSearchReg').addEventListener('click', searchRegistration);
+
+    // Boutons de sélection rapide : remplit l'immat et lance la résolution ADSBdb
+    document.querySelectorAll('.btn-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('regInput').value = btn.dataset.reg;
+        searchRegistration();
+      });
+    });
     document.getElementById('btnTrack').addEventListener('click', toggleLiveTracking);
     document.getElementById('btnHistory').addEventListener('click', fetchPastFlights);
     document.getElementById('btnClearTracks').addEventListener('click', clearAllTracks);
