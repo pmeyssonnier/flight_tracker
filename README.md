@@ -9,10 +9,11 @@ et visualiser son historique de vols via l'API OpenSky Network.
 
 - Suivi en direct (position, altitude, vitesse, cap) via `opensky-network.org/api`
 - Trajectoire tracée sur carte (Leaflet / OpenStreetMap)
-- Recherche du code ICAO24 par immatriculation (API ADSBdb)
+- Recherche du code ICAO24 par immatriculation (API ADSBdb), avec bouton de sélection rapide 🏎 PH-DTF (Falcon 900EX de Max Verstappen)
 - Historique des vols des 30 derniers jours (nécessite un client OAuth2 OpenSky)
 - Export CSV de l'historique de positions
 - Persistance locale (`localStorage`) entre les sessions, par appareil/navigateur
+- Thème sombre / clair (bouton dans le panneau ⚙️), fond de carte assorti
 
 ## Prérequis
 
