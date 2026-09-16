@@ -20,6 +20,28 @@
       --danger: #ef4444;
       --text: #f8fafc;
       --text-muted: #94a3b8;
+      --input-bg: #0b1329;
+      --panel-bg: #141f36;
+      --card-inner: #0f172a;
+      --map-bg: #0b1120;
+      --hud-bg: rgba(15, 23, 42, 0.92);
+      --btn-primary-text: #0f172a;
+    }
+
+    :root[data-theme="light"] {
+      --bg-dark: #f1f5f9;
+      --card-bg: #ffffff;
+      --border: #cbd5e1;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --input-bg: #f8fafc;
+      --panel-bg: #f1f5f9;
+      --card-inner: #f8fafc;
+      --map-bg: #e2e8f0;
+      --hud-bg: rgba(255, 255, 255, 0.92);
+      --btn-primary-text: #ffffff;
     }
 
     * {
@@ -58,7 +80,7 @@
     input, select, button {
       border-radius: 8px;
       border: 1px solid var(--border);
-      background: #0b1329;
+      background: var(--input-bg);
       color: var(--text);
       padding: 8px 12px;
       font-size: 14px;
@@ -92,7 +114,7 @@
 
     button.btn-primary {
       background: var(--accent);
-      color: #0f172a;
+      color: var(--btn-primary-text);
       border-color: var(--accent);
     }
 
@@ -102,7 +124,7 @@
 
     button.btn-success {
       background: var(--success);
-      color: #0f172a;
+      color: var(--btn-primary-text);
       border-color: var(--success);
     }
 
@@ -120,7 +142,7 @@
     /* Panneau Paramètres OAuth2 */
     #settingsPanel {
       display: none;
-      background: #141f36;
+      background: var(--panel-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 12px;
@@ -149,7 +171,7 @@
 
     /* HUD Télémétrie */
     #telemetryBar {
-      background: rgba(15, 23, 42, 0.92);
+      background: var(--hud-bg);
       backdrop-filter: blur(8px);
       border-bottom: 1px solid var(--border);
       padding: 6px 14px;
@@ -183,7 +205,7 @@
       flex: 1;
       width: 100%;
       height: 100%;
-      background: #0b1120;
+      background: var(--map-bg);
     }
 
     /* Tiroir Historique 30 jours */
@@ -229,7 +251,7 @@
     }
 
     .flight-card {
-      background: #0f172a;
+      background: var(--card-inner);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 8px 12px;
@@ -339,7 +361,8 @@
         <input type="text" id="cfgProxyUrl" placeholder="Proxy CORS personnalisé (optionnel, ex: https://mon-proxy.worker.dev/?url=)" style="flex:1; font-size:12px;">
       </div>
 
-      <div class="row" style="justify-content: flex-end;">
+      <div class="row" style="justify-content: space-between;">
+        <button id="btnTheme" title="Basculer thème sombre / clair">☀️ Thème clair</button>
         <button id="btnSaveConfig" class="btn-success">Enregistrer les paramètres</button>
       </div>
     </div>
@@ -417,7 +440,8 @@
       clientSecret: '',
       token: '',
       tokenExpiry: 0,
-      proxyUrl: ''
+      proxyUrl: '',
+      theme: 'dark'
     };
 
     // Initialisation de la carte Leaflet (fond sombre)
@@ -425,10 +449,23 @@
     L.control.zoom({ position: 'topright' }).addTo(map);
     historyLayerGroup.addTo(map);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    const TILE_URLS = {
+      dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+      light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
+    };
+    const tileLayer = L.tileLayer(TILE_URLS.dark, {
       maxZoom: 19,
       attribution: '&copy; CartoDB & OpenStreetMap'
     }).addTo(map);
+
+    // Thème sombre / clair : interface + fond de carte
+    function applyTheme(theme) {
+      const t = theme === 'light' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = t;
+      tileLayer.setUrl(TILE_URLS[t]);
+      document.getElementById('btnTheme').textContent = t === 'dark' ? '☀️ Thème clair' : '🌙 Thème sombre';
+      appState.theme = t;
+    }
 
     // Notification et diagnostic
     function showDiagnostic(msg, isError = true) {
@@ -971,6 +1008,11 @@
     document.getElementById('btnClearTracks').addEventListener('click', clearAllTracks);
     document.getElementById('btnExportCsv').addEventListener('click', exportHistoryCsv);
 
+    document.getElementById('btnTheme').addEventListener('click', () => {
+      applyTheme(appState.theme === 'dark' ? 'light' : 'dark');
+      saveState();
+    });
+
     document.getElementById('btnToggleSettings').addEventListener('click', () => {
       document.getElementById('settingsPanel').classList.toggle('open');
     });
@@ -1010,6 +1052,7 @@
 
     // Chargement initial
     loadSavedState();
+    applyTheme(appState.theme);
     loadHistory();
   </script>
 </body>

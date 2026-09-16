@@ -13,6 +13,7 @@ et visualiser son historique de vols via l'API OpenSky Network.
 - Historique des vols des 30 derniers jours (nécessite un client OAuth2 OpenSky)
 - Export CSV de l'historique de positions
 - Persistance locale (`localStorage`) entre les sessions, par appareil/navigateur
+- Thème sombre / clair (bouton dans le panneau ⚙️), fond de carte assorti
 
 ## Prérequis
 
