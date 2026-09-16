@@ -54,9 +54,16 @@ Le projet est un fichier statique : n'importe quel hébergeur de fichiers statiq
 
 ### GitHub Pages
 
-1. Sur GitHub, ouvrir **Settings → Pages**
-2. Source : **Deploy from a branch**, branche `main`, dossier `/ (root)`
+Le workflow `.github/workflows/pages.yml` publie `index.html` seul (jamais `.env` ni `config.local.js`).
+
+1. Sur GitHub : **Settings → Pages → Build and deployment → Source : GitHub Actions**
+2. Onglet **Actions → Deploy to GitHub Pages → Run workflow**, choisir la branche, lancer
 3. Le site est publié sur `https://<utilisateur>.github.io/flight_tracker/`
+
+Ensuite, chaque push sur `main` redéploie automatiquement.
+
+Sur cette version publique, les identifiants OpenSky se saisissent dans le panneau **⚙️**
+(ils restent dans le `localStorage` de ton navigateur).
 
 ### Serveur perso (nginx)
 
