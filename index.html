@@ -301,6 +301,7 @@
       <button id="btnTrack" class="btn-primary">▶ Suivre</button>
       <button id="btnHistory">📅 30j</button>
       <button id="btnClearTracks" title="Effacer toutes les traces">🧹 Traces</button>
+      <button id="btnExportCsv" title="Exporter l'historique de positions en CSV">⬇ CSV</button>
       <span id="liveStatusBadge" class="badge">Inactif</span>
     </div>
 
@@ -391,6 +392,9 @@
     let planeMarker = null;
     let livePolyline = null;
     let liveCoords = [];
+    let liveHistory = [];          // [{t, icao24, callsign, lat, lon, alt_m, speed_ms, heading, on_ground}]
+    const HISTORY_KEY = 'flight_tracker_history_v3';
+    const HISTORY_MAX = 5000;      // nombre max de points conservés en localStorage
 
     // Groupes pour la gestion des calques Leaflet
     let historyLayerGroup = L.layerGroup();
@@ -484,6 +488,67 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    function saveHistory() {
+      if (liveHistory.length > HISTORY_MAX) liveHistory = liveHistory.slice(-HISTORY_MAX);
+      try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(liveHistory));
+      } catch (e) {
+        console.warn('localStorage plein, historique non sauvegardé', e);
+      }
+    }
+
+    function loadHistory() {
+      const saved = localStorage.getItem(HISTORY_KEY);
+      if (!saved) return;
+      try {
+        liveHistory = JSON.parse(saved) || [];
+      } catch (e) {
+        liveHistory = [];
+        return;
+      }
+      // Rejoue la trace de l'appareil courant
+      const icao = (appState.icao24 || '').toLowerCase();
+      liveCoords = liveHistory
+        .filter(h => !icao || h.icao24 === icao)
+        .map(h => [h.lat, h.lon]);
+      if (liveCoords.length >= 2) {
+        livePolyline = L.polyline(liveCoords, {
+          color: '#38bdf8', weight: 3.5, opacity: 0.85, smoothFactor: 1
+        }).addTo(map);
+        map.fitBounds(livePolyline.getBounds(), { padding: [40, 40], maxZoom: 10 });
+      }
+    }
+
+    // Export CSV de l'historique de positions
+    function exportHistoryCsv() {
+      if (liveHistory.length === 0) return alert('Aucune position enregistrée à exporter.');
+      const header = ['timestamp_utc', 'icao24', 'callsign', 'lat', 'lon', 'alt_m', 'alt_ft', 'speed_kts', 'speed_kmh', 'heading', 'on_ground'];
+      const rows = liveHistory.map(h => [
+        new Date(h.t * 1000).toISOString(),
+        h.icao24,
+        h.callsign || '',
+        h.lat,
+        h.lon,
+        h.alt_m ?? '',
+        h.alt_m != null ? Math.round(h.alt_m * 3.28084) : '',
+        h.speed_ms != null ? Math.round(h.speed_ms * 1.94384) : '',
+        h.speed_ms != null ? Math.round(h.speed_ms * 3.6) : '',
+        h.heading ?? '',
+        h.on_ground ? 1 : 0
+      ].join(';'));
+      const csv = [header.join(';'), ...rows].join('\n');
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const icao = (appState.icao24 || 'flight').toLowerCase();
+      a.href = url;
+      a.download = `positions_${icao}_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
 
     // Résolution d'immatriculation via ADSBdb
@@ -655,6 +720,17 @@
         }
 
         liveCoords.push(currentPos);
+        liveHistory.push({
+          t: s[4] || Math.floor(Date.now() / 1000),
+          icao24: icao,
+          callsign,
+          lat, lon,
+          alt_m: altMeters,
+          speed_ms: velocityMs,
+          heading: Math.round(heading),
+          on_ground: !!onGround
+        });
+        saveHistory();
         if (!livePolyline) {
           livePolyline = L.polyline(liveCoords, {
             color: '#38bdf8',
@@ -849,8 +925,10 @@
     function clearAllTracks() {
       historyLayerGroup.clearLayers();
       clearLiveTrack();
+      liveHistory = [];
+      localStorage.removeItem(HISTORY_KEY);
       showDiagnostic('');
-      alert('Toutes les traces et marqueurs ont été effacés.');
+      alert('Toutes les traces, marqueurs et l\'historique de positions ont été effacés.');
     }
 
     // Écouteurs d'événements
@@ -858,6 +936,7 @@
     document.getElementById('btnTrack').addEventListener('click', toggleLiveTracking);
     document.getElementById('btnHistory').addEventListener('click', fetchPastFlights);
     document.getElementById('btnClearTracks').addEventListener('click', clearAllTracks);
+    document.getElementById('btnExportCsv').addEventListener('click', exportHistoryCsv);
 
     document.getElementById('btnToggleSettings').addEventListener('click', () => {
       document.getElementById('settingsPanel').classList.toggle('open');
@@ -898,6 +977,7 @@
 
     // Chargement initial
     loadSavedState();
+    loadHistory();
   </script>
 </body>
 </html>

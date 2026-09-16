@@ -1,32 +1,57 @@
-# Flight Tracker — Live & Historique
+# ✈️ Flight Tracker
 
-Application **mobile-first en un seul fichier HTML/JS** (Leaflet + API OpenSky Network) : suivi d'un avion en direct, tracé de sa trajectoire sur carte, et récupération de ses vols passés (30 jours) avec rendu GPS.
+Application web mono-fichier (HTML/JS vanilla + Leaflet) pour suivre un avion spécifique en direct
+et visualiser son historique de vols via l'API OpenSky Network.
 
-## Fichier
+## Fonctionnalités
 
-- `flight_tracker_v3.html` — l'application complète. Aucune dépendance à installer : ouvre le fichier directement dans un navigateur (Leaflet est chargé depuis un CDN).
+- Suivi en direct (position, altitude, vitesse, cap) via `opensky-network.org/api`
+- Trajectoire tracée sur carte (Leaflet / OpenStreetMap)
+- Recherche du code ICAO24 par immatriculation (API ADSBdb)
+- Historique des vols des 30 derniers jours (nécessite un client OAuth2 OpenSky)
+- Export CSV de l'historique de positions
+- Persistance locale (`localStorage`) entre les sessions, par appareil/navigateur
 
-## Points d'architecture à connaître
+## Prérequis
 
-- **OpenSky Network** est l'API gratuite la plus adaptée. Le suivi live basique (`/states/all`) fonctionne sans clé, avec une limite d'environ 400 requêtes/jour en anonyme.
-- **Depuis mars 2026, l'authentification login/mot de passe est supprimée.** Il faut un client **OAuth2** (`client_id` / `client_secret`), gratuit, à créer sur opensky-network.org → *My flights* → onglet **API Client**. Ces identifiants sont nécessaires pour l'historique des vols (`/flights/aircraft`) et les trajectoires passées (`/tracks/all`). Sans eux, seul le suivi live fonctionne.
-- **Limite structurelle** : contrairement à des comptes comme @elonjet ou @aviondebernard qui tournent 24/7 sur un serveur, cette page ne suit l'avion que **pendant qu'elle est ouverte** dans le navigateur. Les paramètres (immatriculation, ICAO24, identifiants, token) sont conservés en `localStorage` entre les sessions, mais rien ne tourne si l'onglet est fermé. Pour un tracking permanent, il faut un petit script Python en cron sur un VPS qui logge dans un fichier JSON/CSV que cette page viendrait lire.
-- **Recherche par immatriculation** (ex. `OO-ABC`, `F-GXYZ`) via l'API gratuite **ADSBdb**, pour retrouver le hex ICAO24 sans le connaître par cœur.
+- Un compte gratuit sur [opensky-network.org](https://opensky-network.org) → onglet **API Client**
+  pour générer un `client_id` / `client_secret` (nécessaire pour l'historique des vols)
 
 ## Utilisation
 
-1. Ouvre `flight_tracker_v3.html` dans un navigateur.
-2. Trouve l'ICAO24 hex de l'appareil :
-   - soit via le champ immatriculation + bouton **🔍 ADSBdb** (recherche automatique),
-   - soit manuellement (FlightRadar24, opensky-network.org/aircraft-database) dans le champ **ICAO (hex)**.
-3. Pour l'historique et les tracés passés, ouvre le panneau **⚙️** et colle ton **Client ID** / **Client Secret** OpenSky, puis **Enregistrer les paramètres**.
-   - Si le navigateur bloque l'appel OAuth2 (CORS), utilise le bouton **📋 Commande curl** : lance la commande dans un terminal, puis colle l'`access_token` obtenu dans le champ *Bearer Token*.
-   - Un proxy CORS personnalisé (ex. Cloudflare Worker) peut aussi être renseigné.
-4. Clique **▶ Suivre** pour le live (position, altitude, vitesse, cap, rafraîchi toutes les 10 s).
-5. Clique **📅 30j** pour lister les vols des 30 derniers jours, puis **Tracer** sur un vol pour afficher sa trajectoire GPS avec les pastilles départ / arrivée.
-6. **🧹 Traces** efface toutes les traces et marqueurs de la carte.
+1. Ouvrir `index.html` dans un navigateur (ou via l'URL déployée)
+2. Renseigner le code ICAO24 (ou une immatriculation) de l'avion à suivre
+3. Cliquer sur **▶ Suivre**
+4. (Optionnel) Renseigner les identifiants OAuth pour charger l'historique des vols
 
-## Sources de données
+## Limitations connues
 
-- https://api.adsbdb.com — résolution immatriculation → ICAO24 et modèle.
-- https://opensky-network.org/api — positions live, historique des vols, trajectoires.
+- Le suivi live n'accumule de l'historique que pendant que l'onglet est ouvert
+  (pas de collecte en arrière-plan)
+- L'API anonyme OpenSky est limitée en fréquence (~400 requêtes/jour)
+- Les trajectoires détaillées de vols passés (`/tracks/all`) ne sont pas garanties
+  au-delà de quelques jours
+
+## Déploiement
+
+Le projet est un fichier statique : n'importe quel hébergeur de fichiers statiques convient.
+
+### GitHub Pages
+
+1. Sur GitHub, ouvrir **Settings → Pages**
+2. Source : **Deploy from a branch**, branche `main`, dossier `/ (root)`
+3. Le site est publié sur `https://<utilisateur>.github.io/flight_tracker/`
+
+### Serveur perso (nginx)
+
+Copier `index.html` dans le répertoire servi par nginx, par exemple :
+
+```bash
+scp index.html user@vps:/var/www/flight_tracker/index.html
+```
+
+Aucune configuration particulière n'est nécessaire (pas de backend, pas de build).
+
+## Licence
+
+Usage personnel — données via OpenSky Network (CC-BY 4.0) et ADSBdb.
