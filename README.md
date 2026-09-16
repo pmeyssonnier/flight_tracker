@@ -3,6 +3,8 @@
 Application web mono-fichier (HTML/JS vanilla + Leaflet) pour suivre un avion spécifique en direct
 et visualiser son historique de vols via l'API OpenSky Network.
 
+🌐 **Site en ligne : https://pmeyssonnier.github.io/flight_tracker/**
+
 ## Fonctionnalités
 
 - Suivi en direct (position, altitude, vitesse, cap) via `opensky-network.org/api`
